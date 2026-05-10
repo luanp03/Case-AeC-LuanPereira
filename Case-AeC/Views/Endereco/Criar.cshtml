@@ -1,0 +1,90 @@
+@model Case_AeC.Models.Endereco
+@{
+    ViewData["Title"] = "Criar Endereço";
+}
+
+<div class="container mt-4">
+    <h2> Cadastrar Novo Endereço</h2>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Criar">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Cep" class="control-label font-weight-bold">CEP</label>
+                    <input asp-for="Cep" id="txtCep" class="form-control" placeholder="00000-000"/>
+                    <span asp-validation-for="Cep" class="text-danger"></span>
+                    <small id="cepStatus" class="form-text text-muted"></small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Logradouro" class="control-label">Logradouro</label>
+                    <input asp-for="Logradouro" id="txtLogradouro" class="form-control"/>
+                    <span asp-validation-for="Logradouro" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Numero" class="control-label">Número</label>
+                    <input asp-for="Numero" class="form-control"/>
+                    <span asp-validation-for="Numero" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Bairro" class="control-label">Bairro</label>
+                    <input asp-for="Bairro" id="txtBairro" class="form-control"/>
+                    <span asp-validation-for="Bairro" class="text-danger"></span>
+                </div>
+
+
+                <div class="form-group mb-3">
+                    <label asp-for="Cidade" class="control-label">Cidade</label>
+                    <input asp-for="Cidade" id="txtCidade" class="form-control"/>
+                    <span asp-validation-for="Cidade" class="text-danger"></span>
+                </div>
+
+                   <div class="form-group mb-3">
+                    <label asp-for="UF" class="control-label">UF</label>
+                    <input asp-for="UF" id="txtUF" class="form-control"/>
+                    <span asp-validation-for="UF" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary"> Salvar Endereço</button>
+                    <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById("txtCep").addEventListener("blur", function() {
+            const cep = this.value.replace(/\D/g, '');
+            const status = document.getElementById("cepStatus");
+
+            if (cep.length === 8) {
+                status.innerText = "Buscando...";
+
+                fetch(`/Endereco/BuscarCep?cep=${cep}`)
+                .then(response => {
+                    if (!response.ok) throw new Error("CEP não encontrado");
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById("txtLogradouro").value = data.logradouro;
+                    document.getElementById("txtBairro").value = data.bairro;
+                    document.getElementById("txtCidade").value = data.localidade || data.cidade;
+                    document.getElementById("txtUF").value = data.uf;
+                    status.innerText = "Endereço preenchido automaticamente.";
+                })
+                .catch (err => {
+                    status.innerText = "CEP não encontrado ou inválido.";
+                    console.error(err);
+                });
+            }
+        });
+    </script>
+}
