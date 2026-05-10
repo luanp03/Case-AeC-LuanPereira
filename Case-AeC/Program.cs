@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Case_AeC.Data;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<Case_AeC.Services.ViaCepService>();
+builder.Services.AddAuthentication("CookieAuth")
+
+    .AddCookie("CookieAuth", options =>
+    {
+        options.LoginPath = "/Usuario/Login";
+        options.AccessDeniedPath = "/Usuario/AccessDenied";
+    });
 
 var app = builder.Build();
 
@@ -23,13 +31,15 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Usuario}/{action=Login}/{id?}")
     .WithStaticAssets();
 
 

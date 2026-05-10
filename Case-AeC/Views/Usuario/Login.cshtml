@@ -1,0 +1,42 @@
+@model Case_AeC.Models.Usuario
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row justify-content-center">
+    <div>
+        <h2 class="text-center"> Acesso ao Sistema</h2>
+        <hr>
+
+        @if (TempData["Sucesso"] != null)
+        {
+            <div class="alert alert-success" alert-dismissible fade-show role="alert">
+                @TempData["Sucesso"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger">@ViewBag.Error</div>   
+        }
+
+        <form asp-action="Login" method="post">
+            <div class="form-group mb-3">
+                <label class="control-label">Usuário</label>
+                <input name="Login" class="form-control" required />
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Senha</label>
+                <input name="senha" type="password" class="form-control" required />
+            </div>      
+
+            <div class="form-group d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Entrar</button>
+                <a asp-action="Criar" class="btn btn-secondary">Cadastrar Novo Usuário</a>
+            </div>
+        </form>
+    </div>
+</div>

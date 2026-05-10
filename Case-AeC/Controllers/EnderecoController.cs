@@ -3,9 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Case_AeC.Data;
 using Case_AeC.Models;
 using Case_AeC.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Case_AeC.Controllers
 {
+    [Authorize]
     public class EnderecoController : Controller
     {
         private readonly AppDbContext _context;
@@ -17,10 +20,11 @@ namespace Case_AeC.Controllers
             _viaCepService = viaCepService;
         }
         
-        //Lista os endereços cadastrados
+        //Lista os endereços cadastrados pelo usuário logado
         public async Task<IActionResult> Index()
         {
-            var enderecos = await _context.Enderecos.ToListAsync();
+            var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var enderecos = await _context.Enderecos.Where(e => e.UsuarioId == usuarioId).ToListAsync();
             return View(enderecos);
         }
 
@@ -32,7 +36,12 @@ namespace Case_AeC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Criar(Endereco endereco)
         {
-            if(ModelState.IsValid)
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            endereco.UsuarioId = int.Parse(usuarioId);
+
+            ModelState.Remove("UsuarioId");
+
+            if (ModelState.IsValid)
             {
                 _context.Add(endereco);
                 await _context.SaveChangesAsync();
@@ -46,7 +55,10 @@ namespace Case_AeC.Controllers
             if (id == null)
                 return NotFound();
 
-            var endereco = await _context.Enderecos.FindAsync(id);
+            var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            
+            var endereco = await _context.Enderecos.FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == usuarioId);
+
             if (endereco == null)
                 return NotFound();
 
@@ -59,14 +71,30 @@ namespace Case_AeC.Controllers
         {
             if (id != endereco.Id)
                 return NotFound();
+
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            endereco.UsuarioId = int.Parse(usuarioId);
+            ModelState.Remove("UsuarioId");
         
             if (ModelState.IsValid)
             {
+                var existing = await _context.Enderecos.FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == endereco.UsuarioId);
+                if (existing == null)
+                    return NotFound();
+
                 try
                 {
-                    _context.Update(endereco);
+                    existing.Cep = endereco.Cep;
+                    existing.Logradouro = endereco.Logradouro;
+                    existing.Numero = endereco.Numero;
+                    existing.Complemento = endereco.Complemento;
+                    existing.Bairro = endereco.Bairro;
+                    existing.Cidade = endereco.Cidade;
+                    existing.UF = endereco.UF;
+
                     await _context.SaveChangesAsync();
                 }
+
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!_context.Enderecos.Any(e => e.Id ==id))
@@ -84,8 +112,12 @@ namespace Case_AeC.Controllers
         {
             if (id == null)
                 return NotFound();
+
+            var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             
-            var endereco = await _context.Enderecos.FirstOrDefaultAsync(m => m.Id == id);
+            var endereco = await _context.Enderecos.FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == usuarioId);
+
+
             if (endereco == null)
                 return NotFound();
 
@@ -96,7 +128,9 @@ namespace Case_AeC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExcluirConfirmado(int id)
         {
-            var endereco = await _context.Enderecos.FindAsync(id);
+            var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var endereco = await _context.Enderecos.FirstOrDefaultAsync(e => e.Id == id && e.UsuarioId == usuarioId);
+
             if (endereco !=null)
             {
                 _context.Enderecos.Remove(endereco);
@@ -105,16 +139,18 @@ namespace Case_AeC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        //Exporta os endereços do usuário logado para um arquivo CSV
         public async Task<IActionResult> ExportarCSV()
         {
-            var enderecos = await _context.Enderecos.ToListAsync();
-            var csv = new System.Text.StringBuilder();
+            var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var enderecos = await _context.Enderecos.Where(e => e.UsuarioId == usuarioId).ToListAsync();
 
-            csv.AppendLine("Id;CEP;Logradouro;Bairro;Cidade;UF");
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Id;CEP;Logradouro;Numero;Complemento;Bairro;Cidade;UF");
 
             foreach (var item in enderecos)
             {
-                csv.AppendLine($"{item.Id};{item.Cep};{item.Logradouro};{item.Bairro};{item.Cidade};{item.UF}");
+                csv.AppendLine($"{item.Id};{item.Cep};{item.Logradouro};{item.Numero};{item.Complemento};{item.Bairro};{item.Cidade};{item.UF}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv.ToString())).ToArray();

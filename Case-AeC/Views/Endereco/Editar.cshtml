@@ -1,0 +1,39 @@
+@model Case_AeC.Models.Endereco
+@{
+    ViewData["Title"] = "Editar Endereço";
+}
+
+<h2>Editar Endereço</h2>
+<form asp-action="Editar">
+    <input type="hidden" asp-for="Id">
+    <div class="form-group mb-3">
+        <label asp-for="Cep">CEP</label>
+        <input asp-for="Cep" class="form-control" id="cep">
+    </div>
+    <div>
+        <label asp-for="Logradouro">Logradouro</label>
+        <input asp-for="Logradouro" class="form-control" id="logradouro">
+    </div>
+    <div>
+        <label asp-for="Numero">Número</label>
+        <input asp-for="Numero" class="form-control" id="numero">
+    </div>
+    <div>
+        <label asp-for="Complemento">Complemento</label>
+        <input asp-for="Complemento" class="form-control" id="complemento">
+    </div>
+    <div>
+        <label asp-for="Bairro">Bairro</label>
+        <input asp-for="Bairro" class="form-control" id="bairro">
+    </div>
+    <div>
+        <label asp-for="Cidade">Cidade</label>
+        <input asp-for="Cidade" class="form-control" id="cidade">
+    </div>
+    <div>
+        <label asp-for="UF">UF</label>
+        <input asp-for="UF" class="form-control" id="uf">
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+</form>
